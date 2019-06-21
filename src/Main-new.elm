@@ -78,11 +78,13 @@ calculate result operation number =
         NoOp ->
             0.0
 
+        ShowResult ->
+            result
+
 
 type Msg
     = EnterDigit String
     | EnterOperation Operation
-    | ShowResult
     | Reset
     | ChangeSign
     | Persent
@@ -93,11 +95,12 @@ type Operation
     | Substraction
     | Multiplication
     | Division
+    | ShowResult
     | NoOp
 
 
 update : Msg -> Model -> Model
-update msg ({ number, prevNumber, result, screen, operation } as model) =
+update msg ({ number, prevNumber, result, screen, operation, activeOperation } as model) =
     let
         resultCalc =
             calculate result operation number
@@ -140,22 +143,60 @@ update msg ({ number, prevNumber, result, screen, operation } as model) =
             }
 
         EnterOperation enteredOperation ->
-            case number of
-                "" ->
+            case enteredOperation of
+                ShowResult ->
                     { model
-                        | operation = enteredOperation
-                        , activeOperation = enteredOperation
+                        | result =
+                            case number of
+                                "" ->
+                                    calculate result operation prevNumber
+
+                                _ ->
+                                    calculate result operation number
+                        , screen =
+                            String.fromFloat
+                                (case number of
+                                    "" ->
+                                        calculate result operation prevNumber
+
+                                    _ ->
+                                        calculate result operation number
+                                )
+                        , activeOperation = ShowResult
+
+                        {-
+                           , number = "" исправляет 2+3=+6, но ломает 2+3==
+
+                           2+= = = = работает неправильно
+                        -}
                     }
 
                 _ ->
-                    { model {- из-за number=""не работает 2+= = = -}
-                        | number = ""
-                        , prevNumber = number
-                        , result = checkOperation
-                        , operation = enteredOperation
-                        , activeOperation = enteredOperation
-                        , screen = String.fromFloat checkOperation
-                    }
+                    case activeOperation of
+                        ShowResult ->
+                            { model
+                                | result = result
+                                , screen = String.fromFloat result
+                                , number = ""
+                            }
+
+                        _ ->
+                            case number of
+                                "" ->
+                                    { model
+                                        | operation = enteredOperation
+                                        , activeOperation = enteredOperation
+                                    }
+
+                                _ ->
+                                    { model {- из-за number=""не работает 2+= = = -}
+                                        | number = ""
+                                        , prevNumber = number
+                                        , result = checkOperation
+                                        , operation = enteredOperation
+                                        , activeOperation = enteredOperation
+                                        , screen = String.fromFloat checkOperation
+                                    }
 
         ChangeSign ->
             { model
@@ -173,33 +214,11 @@ update msg ({ number, prevNumber, result, screen, operation } as model) =
                 , activeOperation = NoOp
             }
 
-        ShowResult ->
-            { model
-                | result =
-                    case number of
-                        "" ->
-                            calculate result operation prevNumber
+        {-
+           , number = "" исправляет 2+3=+6, но ломает 2+3==
 
-                        _ ->
-                            calculate result operation number
-                , screen =
-                    String.fromFloat
-                        (case number of
-                            "" ->
-                                calculate result operation prevNumber
-
-                            _ ->
-                                calculate result operation number
-                        )
-                , activeOperation = NoOp
-
-                {-
-                   , number = "" исправляет 2+3=+6, но ломает 2+3==
-
-                   2+= = = = работает неправильно
-                -}
-            }
-
+           2+= = = = работает неправильно
+        -}
         Reset ->
             { model
                 | number = ""
@@ -270,7 +289,7 @@ view model =
         , div [ class "row" ]
             [ button [ class "numbers big-button", onClick <| EnterDigit "0" ] [ text "0" ]
             , button [ class "numbers", onClick <| EnterDigit "." ] [ text "." ]
-            , button [ class "operations", onClick <| ShowResult ] [ text "=" ]
+            , button [ class "operations", onClick <| EnterOperation ShowResult ] [ text "=" ]
             ]
         ]
 

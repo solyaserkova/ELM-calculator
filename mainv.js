@@ -4871,7 +4871,7 @@ function _Browser_load(url)
 	}));
 }
 var author$project$Main$NoOp = {$: 'NoOp'};
-var author$project$Main$init = {activeOperation: author$project$Main$NoOp, number: '', operation: author$project$Main$NoOp, result: 0, screen: '0'};
+var author$project$Main$init = {activeOperation: author$project$Main$NoOp, number: '', operation: author$project$Main$NoOp, prevNumber: '', result: 0, screen: '0'};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
@@ -5352,6 +5352,7 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (_n0) {
 	return elm$core$Platform$Sub$none;
 };
+var author$project$Main$ShowResult = {$: 'ShowResult'};
 var elm$core$String$toFloat = _String_toFloat;
 var author$project$Main$calculate = F3(
 	function (result, operation, number) {
@@ -5373,8 +5374,10 @@ var author$project$Main$calculate = F3(
 				return result * floatNumber;
 			case 'Division':
 				return result / floatNumber;
-			default:
+			case 'NoOp':
 				return 0.0;
+			default:
+				return result;
 		}
 	});
 var elm$core$Basics$negate = function (n) {
@@ -5384,9 +5387,11 @@ var elm$core$String$fromFloat = _String_fromNumber;
 var author$project$Main$update = F2(
 	function (msg, model) {
 		var number = model.number;
+		var prevNumber = model.prevNumber;
 		var result = model.result;
 		var screen = model.screen;
 		var operation = model.operation;
+		var activeOperation = model.activeOperation;
 		var resultCalc = A3(author$project$Main$calculate, result, operation, number);
 		var floatNumber = function (num) {
 			var _n9 = elm$core$String$toFloat(num);
@@ -5397,7 +5402,14 @@ var author$project$Main$update = F2(
 				return 0;
 			}
 		};
-		var checkIfNumIsEmptyForEnterDigit = function (num) {
+		var checkOperation = function () {
+			if (operation.$ === 'NoOp') {
+				return floatNumber(number);
+			} else {
+				return resultCalc;
+			}
+		}();
+		var checkIfNumIsEmpty = function (num) {
 			if (number === '') {
 				if (num === '.') {
 					return '0' + num;
@@ -5408,13 +5420,6 @@ var author$project$Main$update = F2(
 				return _Utils_ap(number, num);
 			}
 		};
-		var checkIfNumIsEmpty = function (num) {
-			if (num === '') {
-				return '0';
-			} else {
-				return num;
-			}
-		};
 		switch (msg.$) {
 			case 'EnterDigit':
 				var num = msg.a;
@@ -5422,37 +5427,59 @@ var author$project$Main$update = F2(
 					model,
 					{
 						activeOperation: author$project$Main$NoOp,
-						number: checkIfNumIsEmptyForEnterDigit(num),
-						screen: checkIfNumIsEmptyForEnterDigit(num)
+						number: checkIfNumIsEmpty(num),
+						screen: checkIfNumIsEmpty(num)
 					});
 			case 'EnterOperation':
 				var enteredOperation = msg.a;
-				if (number === '') {
-					return _Utils_update(
-						model,
-						{activeOperation: enteredOperation, operation: enteredOperation});
-				} else {
+				if (enteredOperation.$ === 'ShowResult') {
 					return _Utils_update(
 						model,
 						{
-							activeOperation: enteredOperation,
-							number: '',
-							operation: enteredOperation,
+							activeOperation: author$project$Main$ShowResult,
 							result: function () {
-								if (operation.$ === 'NoOp') {
-									return floatNumber(number);
+								if (number === '') {
+									return A3(author$project$Main$calculate, result, operation, prevNumber);
 								} else {
-									return resultCalc;
+									return A3(author$project$Main$calculate, result, operation, number);
 								}
 							}(),
-							screen: function () {
-								if (operation.$ === 'NoOp') {
-									return checkIfNumIsEmpty(number);
-								} else {
-									return elm$core$String$fromFloat(resultCalc);
-								}
-							}()
+							screen: elm$core$String$fromFloat(
+								function () {
+									if (number === '') {
+										return A3(author$project$Main$calculate, result, operation, prevNumber);
+									} else {
+										return A3(author$project$Main$calculate, result, operation, number);
+									}
+								}())
 						});
+				} else {
+					if (activeOperation.$ === 'ShowResult') {
+						return _Utils_update(
+							model,
+							{
+								number: '',
+								result: result,
+								screen: elm$core$String$fromFloat(result)
+							});
+					} else {
+						if (number === '') {
+							return _Utils_update(
+								model,
+								{activeOperation: enteredOperation, operation: enteredOperation});
+						} else {
+							return _Utils_update(
+								model,
+								{
+									activeOperation: enteredOperation,
+									number: '',
+									operation: enteredOperation,
+									prevNumber: number,
+									result: checkOperation,
+									screen: elm$core$String$fromFloat(checkOperation)
+								});
+						}
+					}
 				}
 			case 'ChangeSign':
 				return _Utils_update(
@@ -5476,26 +5503,6 @@ var author$project$Main$update = F2(
 						screen: elm$core$String$fromFloat(
 							floatNumber(screen) / 100)
 					});
-			case 'ShowResult':
-				return _Utils_update(
-					model,
-					{
-						activeOperation: author$project$Main$NoOp,
-						result: function () {
-							if (operation.$ === 'NoOp') {
-								return floatNumber(number);
-							} else {
-								return resultCalc;
-							}
-						}(),
-						screen: function () {
-							if (operation.$ === 'NoOp') {
-								return checkIfNumIsEmpty(number);
-							} else {
-								return elm$core$String$fromFloat(resultCalc);
-							}
-						}()
-					});
 			default:
 				return _Utils_update(
 					model,
@@ -5514,7 +5521,6 @@ var author$project$Main$EnterOperation = function (a) {
 var author$project$Main$Multiplication = {$: 'Multiplication'};
 var author$project$Main$Persent = {$: 'Persent'};
 var author$project$Main$Reset = {$: 'Reset'};
-var author$project$Main$ShowResult = {$: 'ShowResult'};
 var author$project$Main$Substraction = {$: 'Substraction'};
 var elm$core$Basics$identity = function (x) {
 	return x;
@@ -5967,7 +5973,8 @@ var author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								elm$html$Html$Attributes$class('operations'),
-								elm$html$Html$Events$onClick(author$project$Main$ShowResult)
+								elm$html$Html$Events$onClick(
+								author$project$Main$EnterOperation(author$project$Main$ShowResult))
 							]),
 						_List_fromArray(
 							[
@@ -10149,4 +10156,4 @@ var author$project$Main$main = elm$browser$Browser$element(
 		view: author$project$Main$view
 	});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"EnterDigit":["String.String"],"EnterOperation":["Main.Operation"],"ShowResult":[],"Reset":[],"ChangeSign":[],"Persent":[]}},"Main.Operation":{"args":[],"tags":{"Addition":[],"Substraction":[],"Multiplication":[],"Division":[],"NoOp":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"EnterDigit":["String.String"],"EnterOperation":["Main.Operation"],"Reset":[],"ChangeSign":[],"Persent":[]}},"Main.Operation":{"args":[],"tags":{"Addition":[],"Substraction":[],"Multiplication":[],"Division":[],"ShowResult":[],"NoOp":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
