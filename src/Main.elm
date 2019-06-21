@@ -6,13 +6,6 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 
 
-
-{- TO DO
-   2 + 3 = + 5 error
--}
--- MAIN
-
-
 main =
     Browser.element
         { init = \() -> ( init, Cmd.none )
@@ -108,7 +101,20 @@ update msg ({ number, result, screen, operation } as model) =
                 Nothing ->
                     0
 
-        checkNumber num =
+        checkIfNumIsEmptyForEnterDigit num =
+            case number of
+                "" ->
+                    case num of
+                        "." ->
+                            "0" ++ num
+
+                        _ ->
+                            number ++ num
+
+                _ ->
+                    number ++ num
+
+        checkIfNumIsEmpty num =
             case num of
                 "" ->
                     "0"
@@ -119,31 +125,9 @@ update msg ({ number, result, screen, operation } as model) =
     case msg of
         EnterDigit num ->
             { model
-                | activeOperation = NoOp
-                , number =
-                    case number of
-                        "" ->
-                            case num of
-                                "." ->
-                                    "0" ++ num
-
-                                _ ->
-                                    number ++ num
-
-                        _ ->
-                            number ++ num
-                , screen =
-                    case number of
-                        "" ->
-                            case num of
-                                "." ->
-                                    "0" ++ num
-
-                                _ ->
-                                    number ++ num
-
-                        _ ->
-                            number ++ num
+                | number = checkIfNumIsEmptyForEnterDigit num
+                , screen = checkIfNumIsEmptyForEnterDigit num
+                , activeOperation = NoOp
             }
 
         EnterOperation enteredOperation ->
@@ -169,7 +153,7 @@ update msg ({ number, result, screen, operation } as model) =
                         , screen =
                             case operation of
                                 NoOp ->
-                                    checkNumber number
+                                    checkIfNumIsEmpty number
 
                                 _ ->
                                     String.fromFloat resultCalc
@@ -203,11 +187,13 @@ update msg ({ number, result, screen, operation } as model) =
                 , screen =
                     case operation of
                         NoOp ->
-                            number
+                            checkIfNumIsEmpty number
 
                         _ ->
                             String.fromFloat resultCalc
                 , activeOperation = NoOp
+
+                {- , number = "" исправляет 2+3=+6, но ломает 2+3== -}
             }
 
         Reset ->
