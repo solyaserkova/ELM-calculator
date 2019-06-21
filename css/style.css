@@ -1,0 +1,70 @@
+
+button {
+    border-radius: 50%;
+    outline: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    margin: 3px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SanFrancisco', sans-serif;
+    font-weight: 200;
+    transition: 0.9s;
+}
+
+.numbers:hover {
+    background-color: #a5a5a5;
+    transition: 0.9s;
+}
+
+.container {
+    background-color: black;
+    width: 144px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SanFrancisco', sans-serif;
+    font-weight: 200;
+    padding: 3px;
+    border-radius: 10px;
+}
+
+.row {
+    display: inline-flex;
+}
+
+.result {
+    padding: 3px;
+    color: white;
+    vertical-align: bottom;
+    text-align: right;
+    height: 40px;
+    font-size: 30px;
+
+}
+
+
+.numbers {
+    background-color: #333333;
+    color: white;
+}
+
+.big-button {
+    width: 66px;
+    border-radius: 20px;
+    text-align: left;
+    padding-left: 13px;
+}
+
+.operations {
+    background-color: #fe9500;
+    color: white;
+    transition: 0.9s;
+}
+
+.active-operation {
+    background-color: white;
+    color: #fe9500;
+    transition: 0.9s;
+}
+
+.other {
+    background-color: #a5a5a5;
+    color:  black;
+}
